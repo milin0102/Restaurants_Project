@@ -1,6 +1,6 @@
 # Restaurants Backend  project
 
-A project where user can connect with restaurants , restaurants owner can add their restaurants , customer can comment reviews and restaurants wil reploy to it
+A project where user can connect with restaurants , restaurants owner can add their restaurants , customer can comment reviews and restaurant owners wil reply to it
 
 ---
 ## Requirements
