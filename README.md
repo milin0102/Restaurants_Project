@@ -9,7 +9,7 @@ For development, you will only need Node.js
 
 ## Install
 
-    $ git clone <repo url>
+    $ git clone https://github.com/milin0102/Restaurants_Project.git
     $ cd backend
     $ npm install mongoose cors express figlet jsonwebtoken mongoose mongodb nodemon zod bcrypt
 
