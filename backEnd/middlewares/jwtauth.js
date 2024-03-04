@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken")
 
+//jwt token based authentication 
+//Adding userId and roles of the user requesting for any service
 const checkToken = (req,res,next)=>{
     try {
     let auth = req.header("Authorization") || req.header("x-access-token")
@@ -22,8 +24,6 @@ const checkToken = (req,res,next)=>{
        console.log(error);
        throw error; 
     }
-    
-
 }
 
 module.exports = checkToken

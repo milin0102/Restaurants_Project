@@ -6,9 +6,12 @@ const User = require("../models/userRoles");
 const Admin = require("../models/admin");
 const BusinessOwner = require("../models/businessOwner");
 const jwt = require("jsonwebtoken");
+const {getBcryptPassword , comparePassword} = require("../utils/utils")
 
+
+//Signup functionality is exposed to the API ,
+//Role of the user is asked whil signup
 async function signup(data){
-    console.log("dATA" + data.role)
     try {
         if(data.role=="CUSTOMER" || data.role == "customer"){
             let res = await customerSignUp(data);
@@ -17,6 +20,7 @@ async function signup(data){
             let res = await businessOwnerSignUp(data);
             return res;
         }else{
+            //Only customer and business owner can login
             return {
                 httpStatusCode:400,
                 success:false,
@@ -33,6 +37,8 @@ async function signup(data){
     }
 }
 
+//Signup as a customer
+//After Signup userId and role is save to User collection
 async function customerSignUp(data){
     try {
         //validating request body
@@ -65,7 +71,7 @@ async function customerSignUp(data){
             LastName:data.lastName,
             Email:data.email,
             Phone:data.phone,
-            Password:data.password
+            Password:getBcryptPassword(data.password)
         }
 
         let newCustomer = await Customer.create(insertObj)
@@ -93,8 +99,11 @@ async function customerSignUp(data){
     }
 }
 
+//Signup as a business owner
+//After Signup userId and role is save to User collection
 async function businessOwnerSignUp(data){
     try {
+        //middleware for validating reqeust body
         const validateReq = businessOwnerSignUpBodySchema.safeParse(data)
         console.log(validateReq);
         if(!validateReq.success){
@@ -111,6 +120,8 @@ async function businessOwnerSignUp(data){
                 message:"Email or GovernmentID required"
             }
         }
+
+        //finding business owner if exist
         let findUser = await BusinessOwner.findOne({Email:data.email,GovernmentId:data.governmentId}).catch((e)=>{
             console.log(e);
             throw e;
@@ -122,12 +133,14 @@ async function businessOwnerSignUp(data){
                 message:"User alredy exist with this details",
             }
         }
+
+
         let insertObj = {
             FirstName:data.firstName,
             LastName:data.lastName,
             Email:data.email,
             Phone:data.phone,
-            Password:data.password,
+            Password:getBcryptPassword(data.password),
             GovernmentId:data.governmentId
         }
 
@@ -154,6 +167,7 @@ async function businessOwnerSignUp(data){
     }
 }
 
+//This functionality is exposed to the API
 async function login(data){
 try {
     let res;
@@ -175,6 +189,8 @@ try {
 }
 }
 
+//Login as a customer
+//JWT token is returned in response for further functionality
 async function customerLogin(data){
     try {
         const validateReq = loginBodySchema.safeParse(data);
@@ -185,12 +201,21 @@ async function customerLogin(data){
                 error:validateReq.error?.issues
             }
         }
-        let user = await Customer.findOne({Email:data.email , Password:data.password}).catch((e)=>{
+
+        let user = await Customer.findOne({Email:data.email}).catch((e)=>{
             console.log(e);
             throw e;
         })
         console.log(user)
+
         if(user && user._id){
+            if (!comparePassword(data.password, user.Password)) {
+                return {
+                    httpStatusCode:400,
+                    success:false,
+                    message: 'Please enter the correct password.',
+                }
+            }
             const token = jwt.sign({userId:user._id,role:"CUSTOMER"} , process.env.JWT_SECRET_KEY)
             return {
                 httpStatusCode:200,
@@ -215,6 +240,8 @@ async function customerLogin(data){
 
 }
 
+//Login as a business
+//JWT token is returned in response for further functionality
 async function businessOwnerLogin(data){
     try {
         const validateReq = ownerLoginBodySchema.safeParse(data);
@@ -227,12 +254,19 @@ async function businessOwnerLogin(data){
         }
         console.log(data.email);
         console.log(data.password);
-        let user = await BusinessOwner.find({Email:data.email , Password:data.password}).catch((e)=>{
+        let user = await BusinessOwner.find({Email:data.email}).catch((e)=>{
             console.log(e);
             throw e;
         })
         console.log(user)
         if(user.length && user[0]._id){
+            if (!comparePassword(data.password, user[0].Password)) {
+                return {
+                    httpStatusCode:400,
+                    success:false,
+                    message: 'Please enter the correct password.',
+                }
+            }
             const token = jwt.sign({userId:user[0]._id,role:"BUSINESS_OWNER"} , process.env.JWT_SECRET_KEY)
             return {
                 httpStatusCode:200,
@@ -256,13 +290,13 @@ async function businessOwnerLogin(data){
     } 
 }
 
+//Add admin 
 async function addAdmin(data){
     try {
         let existingAdmin = await Admin.find({Email:data.email}).catch((e)=>{
             console.log(e);
             throw e;
         })
-        console.log(existingAdmin)
         if(existingAdmin?.length){
             return {
                 httpStatusCode:400,
@@ -307,13 +341,14 @@ async function addAdmin(data){
     }
 }
 
+//login as a  admin
 async function adminLogin(data){
     try {
         if(!data.email || !data.password){
             return {
                 httpStatusCode:400,
                 success:false,
-                message:"Incorrect params",
+                message:"Insufficient params",
             }
         }
         let response = await Admin.find({Email:data.email , Password:data.password}).catch((e)=>{

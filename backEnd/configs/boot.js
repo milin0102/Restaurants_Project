@@ -5,21 +5,31 @@ const app = express()
 const db = require("./db")
 const routes = require("../routes")
 const mongoose = require("mongoose")
+const path = require("path")
 
 const init = async ()=>{
 
+//express.json for body-parser
 app.use(express.json());
-app.use(cors());
+
+//enabling cors for all origins
+app.use(cors())
+
+//api and routes
 app.use("/api",routes)
+
 require('dotenv').config()
+
 //database connection
-db.connectToDb().then(function(){
+db.connectToDb(process.env.MONGO_USERNAME , process.env.MONGO_PASSWORD).then(function(){
     start();
 })
 
 
 }
 
+
+//after all connections established function for starting server
 const start = ()=>{
     //Port to connect to app
 const port = process.env.PORT || 3000

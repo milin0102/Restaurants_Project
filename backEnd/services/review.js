@@ -2,8 +2,9 @@ const express = require("express")
 const Review = require("../models/review")
 const Restaurant = require("../models/restaurant")
 const { ObjectId } = require("mongodb")
+const mongoose = require("mongoose")
 
-
+//Adding a review
 async function addReview(data){
     try {
         if(!data.restaurantId || !data.userId){
@@ -13,11 +14,12 @@ async function addReview(data){
                 message:"Invalid Params"
             }
             }
-           let findReview = await Review.findOne({UserId:data.userId ,RestaurantId:data.RestaurantId}).catch((e)=>{
+            console.log(data.userId)
+            //Checking a particular has if already addded review for a particular restaurant to keep reviews authentic
+           let findReview = await Review.findOne({UserId:data.userId ,RestaurantId:data.restaurantId}).catch((e)=>{
                 console.log(e);
                 throw e;
            })
-           console.log("Find:"+findReview)
            if(findReview){
             return {
                 httpStatusCode:400,
@@ -25,11 +27,12 @@ async function addReview(data){
                 message:"You have already added review"
             }
            }
+
+           //Creating a review
            let res = await Review.create({Comment : data.comment, Rating : data.rating , UserId:data.userId ,RestaurantId: data.restaurantId}).catch((e)=>{
             console.log(e);
             throw e;
            })
-           console.log(res);
             if(res._id){
                 let restaurant = await Restaurant.findOne({_id:data.restaurantId}).catch((e)=>{
                     console.log(e);
@@ -38,24 +41,25 @@ async function addReview(data){
                 console.log(restaurant);
                 let updatedReviews=[]
                 if(restaurant){
-                    if(restaurant.Reviews?.length){
+                    let averageRating = restaurant.Rating || data.rating;
+                    if(restaurant.Reviews?.length>0){
+                        //Calculate average rating of any restaurant
+                        averageRating = await calculateAverageRating({reviewIds:restaurant.Reviews.concat(res._id) , rating:data.rating})
                         updatedReviews = restaurant.Reviews.concat(res._id)
                     }else{
                         updatedReviews.push(res._id)
                     }
-                    await Restaurant.updateOne({_id:data.restaurantId},{Reviews:updatedReviews}).catch((e)=>{
+                    await Restaurant.updateOne({_id:data.restaurantId},{Reviews:updatedReviews,Rating:averageRating}).catch((e)=>{
                         console.log(e);
                         throw e;
-                    })
+                    }) 
                 }else{
                     return {
                         httpStatusCode:500,
                         success:false,
                         message:"Restaurant not found"
                     }
-                
                 }
-                
                 return {
                     httpStatusCode:200,
                     success:true,
@@ -76,6 +80,38 @@ async function addReview(data){
     
 }
 
+//function to calculate average rating of a restaurant
+async function calculateAverageRating(data){
+    try {
+        const reviewIds = data.reviewIds.map((e)=>{
+            let id = new ObjectId(e);
+            return id;
+        })
+        let reviews = await Review.find({_id:{$in:reviewIds}}).catch((e)=>{
+            console.log(e);
+            throw e;
+        })
+        if(reviews?.length){
+            let totalRating=0;
+            reviews.map((review)=>{
+                console.log(review.Rating)
+                totalRating+=review.Rating
+                return totalRating;
+            });
+            let totalReviews = reviews.length
+            let averageRating = totalRating/totalReviews
+            return averageRating.toFixed(1);
+        }else{
+            return data.rating;
+        }
+    } catch (error) {
+        console.log(error);
+        return error;
+    }
+ 
+}
+
+//Delete a review
 async function deleteReview(data){
     try {
         console.log(data)
@@ -102,6 +138,7 @@ async function deleteReview(data){
     }
 }
 
+//Get all reviews of any restaurant
 async function getReviews(data){
     try {
         if(!data.restaurantId){
@@ -131,8 +168,7 @@ async function getReviews(data){
                     success:true,
                     message:"All reviews fetched",
                     data:reviewsArr
-                }
-                
+                }   
             }
             return {
                 httpStatusCode:404,
@@ -144,7 +180,7 @@ async function getReviews(data){
             return {
                 httpStatusCode: 404,
                 success:false,
-                message:'No restaurants found',
+                message:'No restaurant found',
                 data:[]
             }
         }
@@ -154,6 +190,7 @@ async function getReviews(data){
     }
 }
 
+//For adding reply for any review
 async function addReply(data){
     try {
         if(!data.reviewId){
@@ -181,6 +218,7 @@ async function addReply(data){
         throw error;
     }
 }
+
 exports.addReview = addReview
 exports.deleteReview = deleteReview
 exports.getReviews = getReviews

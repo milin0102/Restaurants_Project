@@ -1,4 +1,6 @@
 const User = require("../models/userRoles")
+
+//middleware to check roles and access of any functionality for the current user
 const checkRoles = (roles)=>{
     return async (req,res,next)=>{
         if(!req.role){

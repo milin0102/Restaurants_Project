@@ -5,6 +5,7 @@ const userRoutes = require("../routes/user")
 const restaurantRoutes = require("../routes/restaurant")
 const reviewRoutes = require("../routes/reviews")
 
+//routes for different functionalities
 router.use("/v1/user",userRoutes)
 router.use("/v1/restaurant",restaurantRoutes)
 router.use("/v1/review",reviewRoutes)

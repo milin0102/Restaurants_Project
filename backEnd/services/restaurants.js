@@ -6,8 +6,10 @@ const { default: mongoose } = require("mongoose");
 const { ObjectId } = require("mongodb")
 
 
+//Adding restaurants
 async function addRestaurants(data){
     try {
+    //Validate the request body
      const validateReq = registerRestaurantSchema.safeParse(data);
      if(!validateReq.success){
         return {
@@ -17,6 +19,7 @@ async function addRestaurants(data){
             error:validateReq?.error?.issues
         }
      }
+
      if(!data.userId){
         return {
             httpStatusCode:403,
@@ -25,6 +28,7 @@ async function addRestaurants(data){
         }
      }
 
+     //Email id is a primary identifier
      let findRestaurant = await Restaurant.find({Email:data.email}).catch((e)=>{
         console.log(e);
         throw e;
@@ -58,6 +62,8 @@ async function addRestaurants(data){
             console.log(e);
             throw e;
          });
+        
+         //Linking Restaurant id to particular business owner
         if(ownerDetails){
             let restaurants = ownerDetails.Restaurants;
             restaurants.push(responseObj._id);
@@ -81,16 +87,15 @@ async function addRestaurants(data){
             data:{},
             message:"Failed to add restaurant"
         }  
-    }
-
-
-
-        
+    }     
     } catch (error) {
         console.log(error);
         throw error;
     }
 }
+
+
+//Business owner can only see their restaurants
 async function getRestaurants(data){
    try {
     if(data.role=="BUSINESS_OWNER" && !data.userId){
@@ -124,7 +129,8 @@ async function getRestaurants(data){
         }
 
     }else if(data.role=="ADMIN" || data.role=="CUSTOMER"){
-        let restaurants = await Restaurant.find({}).catch((e)=>{
+        //Admin and customers can see all restaurants after login
+        let restaurants = await Restaurant.find({Active:true}).catch((e)=>{
             console.log(e);
             throw e;
         })
@@ -146,6 +152,7 @@ async function getRestaurants(data){
    } 
 }
 
+//Update Restaunrant
 async function updateRestaurant(data){
     try {
         if(!data.restaurantId){
@@ -207,6 +214,8 @@ async function updateRestaurant(data){
     
 }
 
+
+//Not deleting it , but making active flag to false
 async function deleteRestaurant(data){
     try {
         if(!data.restaurantId){
