@@ -7,13 +7,11 @@ A project where user can connect with restaurants , restaurants owner can add th
 
 For development, you will only need Node.js
 
----
-
 ## Install
 
     $ git clone <repo url>
     $ cd backend
-    $ npm install mongoose cors express figlet jsonwebtoken mongoose mongodb nodemon zod
+    $ npm install mongoose cors express figlet jsonwebtoken mongoose mongodb nodemon zod bcrypt
 
 ## Running the project
 
