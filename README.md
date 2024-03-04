@@ -1,19 +1,17 @@
 # Restaurants Backend  project
 
-A project where user can connect with restaurants , restaurants owner can add their restaurants , customer can comment reviews and restaurants wil reploy to it
+A project where user can connect with restaurants , restaurants owner can add their restaurants , customer can comment reviews and restaurant owners wil reply to it
 
 ---
 ## Requirements
 
 For development, you will only need Node.js
 
----
-
 ## Install
 
-    $ git clone <repo url>
+    $ git clone https://github.com/milin0102/Restaurants_Project.git
     $ cd backend
-    $ npm install mongoose cors express figlet jsonwebtoken mongoose mongodb nodemon zod
+    $ npm install mongoose cors express figlet jsonwebtoken mongoose mongodb nodemon zod bcrypt
 
 ## Running the project
 
